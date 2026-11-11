@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Corrida de carro telecomandado em 3D numa sala real.">
+<meta name="theme-color" content="#120c0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Revolta na Sala">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Revolta na Sala</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,6 +140,7 @@ body.touch #sKmh{font-size:1.4rem}
     <button id="bSound" type="button">Som<kbd>M</kbd></button>
     <button id="bReset" type="button">Repor<kbd>R</kbd></button>
     <button id="bPause" type="button">Pausa<kbd>P</kbd></button>
+    <button id="bFull" type="button">Ecrã inteiro<kbd>F</kbd></button>
   </div>
   <canvas id="minimap" aria-label="Mapa da sala"></canvas>
 </div>
@@ -156,6 +163,7 @@ body.touch #sKmh{font-size:1.4rem}
       <dt>C · M · P</dt><dd>Câmara · som · pausa</dd>
     </dl>
     <p class="touch-note" id="touchNote" hidden>Acelera e trava à direita, vira à esquerda. Drift para derrapar.</p>
+    <p class="touch-note" id="iosNote" hidden>No iPhone, para ecrã inteiro: botão Partilhar → Adicionar ao ecrã principal, e abre o jogo pelo ícone.</p>
     <p class="best" id="menuBest"></p>
     <button id="btnStart" class="cta" type="button">Começar corrida</button>
     <div class="mp">
@@ -916,6 +924,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetToCheckpoint();
   else if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
+  else if (e.code === 'KeyF') toggleFullscreen();
   else if (e.code === 'Enter' && state === 'menu') startSynced();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -1186,11 +1195,26 @@ let toastHide = 0;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastHide); toastHide = setTimeout(() => t.classList.remove('show'), 1500); }
 
 // In a two-player race any restart is mirrored on the other phone so both countdowns run together.
-function startSynced() { send({ t: 'start' }); startRace(); }
+function startSynced() { if (isTouch) goFullscreen(); send({ t: 'start' }); startRace(); }
+// Fullscreen and the landscape lock need a tap to be allowed, so they run from button handlers only.
+// iPhone Safari has no fullscreen for pages; there the game goes fullscreen when opened from the home screen.
+function goFullscreen() {
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+  try {
+    const p = req.call(el, { navigationUI: 'hide' });
+    if (p && p.then) p.then(() => screen.orientation?.lock?.('landscape')).catch(() => { /* refused: keep playing in the page */ });
+  } catch { /* not allowed in this view */ }
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else goFullscreen();
+}
+$('bFull').addEventListener('click', () => { toggleFullscreen(); canvas.focus(); });
 $('btnStart').addEventListener('click', startSynced);
 $('btnAgain').addEventListener('click', startSynced);
-$('btnHost').addEventListener('click', () => hostRace());
-$('btnJoin').addEventListener('click', () => joinRace());
+$('btnHost').addEventListener('click', () => { if (isTouch) goFullscreen(); hostRace(); });
+$('btnJoin').addEventListener('click', () => { if (isTouch) goFullscreen(); joinRace(); });
 $('joinCode').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') joinRace(); });
 $('btnMenu').addEventListener('click', toMenu);
 $('btnResume').addEventListener('click', togglePause);
@@ -1204,6 +1228,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && (st
 
 const isTouch = matchMedia('(pointer: coarse)').matches;
 if (isTouch) { document.body.classList.add('touch'); $('keysList').hidden = true; $('touchNote').hidden = false; }
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (isIOS && !navigator.standalone) $('iosNote').hidden = false;
+if (isIOS || !(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('bFull').hidden = true;
 
 // ---------- minimap ----------
 const mm = $('minimap'), mg = mm.getContext('2d');
@@ -1397,7 +1424,14 @@ function joinRace() {
   mpReset(); initAudio();
   mp.code = code; mpStatus('A ligar…');
   const peer = new window.Peer(); mp.peer = peer;
-  peer.on('open', () => bindConn(peer.connect(PEER_PREFIX + code, { reliable: true })));
+  peer.on('open', () => {
+    const c = peer.connect(PEER_PREFIX + code, { reliable: true });
+    bindConn(c);
+    // When the two networks cannot reach each other the connection never opens and PeerJS reports nothing.
+    setTimeout(() => {
+      if (mp.conn === c && !c.open) { mpReset(); mpStatus('Não foi possível ligar os dois aparelhos. Liga os dois à mesma rede Wi-Fi e tenta outra vez.'); }
+    }, 15000);
+  });
   peer.on('error', e => { const m = peerError(e); mpReset(); mpStatus(m); });
 }
 function bindConn(c) {

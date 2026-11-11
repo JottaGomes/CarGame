@@ -1,0 +1,10 @@
+{
+  "name": "Revolta na Sala",
+  "short_name": "Revolta",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#120c0a",
+  "theme_color": "#120c0a"
+}
