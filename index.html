@@ -185,7 +185,7 @@ body.touch #sKmh{font-size:1.4rem}
         <button type="button" class="veh" data-veh="buggy" aria-pressed="true">Buggy</button>
         <button type="button" class="veh" data-veh="nave" aria-pressed="false">Nave espacial</button>
         <button type="button" class="veh" data-veh="camiao" aria-pressed="false">Camião betoneira</button>
-        <button type="button" class="veh" data-veh="bicicleta" aria-pressed="false">Bicicleta</button>
+        <button type="button" class="veh" data-veh="skate" aria-pressed="false">Skate espacial</button>
       </div>
       <p class="veh-desc" id="vehDesc">Equilibrado em tudo.</p>
     </fieldset>
@@ -914,6 +914,12 @@ function tube(p, ax, ay, bx, by, z, r, mat) {
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / len, dy / len, 0));
   return m;
 }
+function tube3(p, a, b, r, mat) {
+  const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), len = d.length();
+  const m = cyl(r, r, len, mat, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, p, 8);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  return m;
+}
 function nitroFlame(p, x, y) {
   const f = mesh(new THREE.ConeGeometry(.022, .1, 10), flameMat, x, y, 0, p, { cast: false, recv: false });
   f.rotation.z = Math.PI / 2; f.visible = false; return f;
@@ -949,32 +955,30 @@ function buildVehicle(kind, parent, paintMat) {
     v.beacon = sph(.009, M.bulb, .115, .152, 0, g, { cast: false });
     v.wheels = wheelSet(g, [[.11, .075, true], [.11, -.075, true], [-.06, .075], [-.06, -.075], [-.12, .075], [-.12, -.075]], .036, .03, chromeMat);
     v.flame = nitroFlame(g, -.2, .06);
-  } else if (kind === 'bicicleta') {
-    const wheel = (x, front) => {
-      const pivot = new THREE.Group(); pivot.position.set(x, .05, 0); g.add(pivot);
-      const spin = new THREE.Group(); pivot.add(spin);
-      mesh(new THREE.TorusGeometry(.046, .006, 8, 32), rubber, 0, 0, 0, spin);
-      for (let k = 0; k < 4; k++) { const sp = box(.09, .0018, .0018, chromeMat, 0, 0, 0, spin, { cast: false }); sp.rotation.z = k * Math.PI / 4; }
-      const hub = cyl(.006, .006, .014, chromeMat, 0, 0, 0, spin, 8); hub.rotation.x = Math.PI / 2;
-      return { pivot, spin, front };
-    };
-    v.wheels = [wheel(.11, true), wheel(-.11, false)];
-    const r = .0045;
-    tube(g, -.11, .05, -.01, .04, 0, r, paintMat);
-    tube(g, -.11, .05, -.04, .12, 0, r, paintMat);
-    tube(g, -.01, .04, -.04, .12, 0, r, paintMat);
-    tube(g, -.04, .12, .075, .12, 0, r, paintMat);
-    tube(g, -.01, .04, .08, .095, 0, r, paintMat);
-    tube(g, .08, .095, .11, .05, 0, r, chromeMat);
-    tube(g, .075, .12, .08, .135, 0, r, chromeMat);
-    const bar = cyl(.003, .003, .06, carDark, .08, .135, 0, g, 8); bar.rotation.x = Math.PI / 2;
-    box(.03, .007, .014, carDark, -.045, .126, 0, g);
-    // Rider leaning over the handlebar, kept low enough to fit under the sofa.
-    const torso = cyl(.011, .013, .06, std({ color: '#2f6fd1', roughness: .8 }), .0, .15, 0, g, 10); torso.rotation.z = -.95;
-    sph(.014, std({ color: '#e2b996', roughness: .8 }), .035, .168, 0, g);
-    const helmet = mesh(new THREE.SphereGeometry(.017, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), paintMat, .035, .171, 0, g); helmet.scale.set(1.2, 1, 1);
-    for (const z of [.012, -.012]) { tube(g, .02, .16, .078, .135, z, .003, std({ color: '#2f6fd1', roughness: .8 })); tube(g, -.035, .13, -.01, .045, z, .004, carDark); }
-    v.flame = nitroFlame(g, -.17, .06);
+  } else if (kind === 'skate') {
+    // Hover skateboard with a rider standing sideways on it; the whole board floats like the spaceship.
+    const hov = new THREE.Group(); g.add(hov); v.hover = hov;
+    rbox(.26, .014, .085, .006, paintMat, 0, .035, 0, hov);
+    box(.22, .002, .07, std({ color: '#15171a', roughness: .9 }), 0, .043, 0, hov);
+    for (const x of [.09, -.09]) {
+      cyl(.022, .026, .012, carDark, x, .024, 0, hov, 16);
+      cyl(.019, .019, .003, glowMat, x, .017, 0, hov, 16, { cast: false });
+    }
+    for (const z of [.025, -.025]) {
+      const jet = cyl(.01, .013, .04, chromeMat, -.135, .035, z, hov, 10); jet.rotation.z = Math.PI / 2;
+      const ex = cyl(.009, .009, .003, glowMat, -.156, .035, z, hov, 10, { cast: false }); ex.rotation.z = Math.PI / 2;
+    }
+    const suit = std({ color: '#e9e9ef', roughness: .6 }), boots = carDark;
+    for (const sx of [1, -1]) {
+      tube3(hov, [sx * .05, .045, 0], [sx * .035, .075, .012], .006, boots);
+      tube3(hov, [sx * .035, .075, .012], [sx * .008, .1, 0], .007, suit);
+    }
+    tube3(hov, [0, .1, 0], [.012, .138, 0], .012, suit);
+    for (const sz of [1, -1]) tube3(hov, [.012, .134, sz * .014], [sz > 0 ? .065 : -.05, .112, sz * .05], .004, suit);
+    sph(.014, std({ color: '#e2b996', roughness: .8 }), .02, .155, 0, hov);
+    const helmet = mesh(new THREE.SphereGeometry(.017, 16, 10), paintMat, .02, .158, 0, hov); helmet.scale.set(1.1, 1, 1.05);
+    box(.004, .008, .022, glowMat, .038, .158, 0, hov, { cast: false });
+    v.flame = nitroFlame(hov, -.2, .035);
   } else {
     box(.30, .02, .14, carDark, 0, .04, 0, g);
     rbox(.27, .05, .17, .02, paintMat, 0, .08, 0, g);
@@ -998,7 +1002,7 @@ const VEHICLES = {
   buggy: { name: 'Buggy', desc: 'Equilibrado em tudo.', max: 1, acc: 1, grip: 1, steer: 1 },
   nave: { name: 'Nave espacial', desc: 'Paira, ignora o tapete e desliza nas curvas.', max: 1.08, acc: 1.1, grip: .55, steer: 1.05 },
   camiao: { name: 'Camião betoneira', desc: 'Mais lento, mas agarra-se ao chão. A betoneira roda.', max: .86, acc: .75, grip: 1.35, steer: .85 },
-  bicicleta: { name: 'Bicicleta', desc: 'Curva apertado e inclina-se nas curvas.', max: .93, acc: 1.15, grip: 1.1, steer: 1.3 },
+  skate: { name: 'Skate espacial', desc: 'Supersónico: o mais rápido, paira sobre o tapete e escorrega nas curvas.', max: 1.16, acc: 1.3, grip: .7, steer: 1.15 },
 };
 let vehKind = 'buggy';
 try { const k = localStorage.getItem('revolta-na-sala-veiculo'); if (VEHICLES[k]) vehKind = k; } catch { /* storage unavailable: start with the buggy */ }
@@ -1008,6 +1012,7 @@ function setVehicle(kind) {
   vehKind = kind; carBody.clear(); veh = buildVehicle(kind, carBody, paint);
   try { localStorage.setItem('revolta-na-sala-veiculo', kind); } catch { /* storage unavailable: choice lasts this session */ }
   document.querySelectorAll('.veh').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.veh === kind)));
+  applyEngineVoice();
   $('vehDesc').textContent = VEHICLES[kind].desc;
 }
 const blob = mesh(new THREE.PlaneGeometry(.22, .16), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }), 0, 0, 0, scene, { cast: false, recv: false });
@@ -1083,7 +1088,21 @@ function readInput() {
 }
 
 // ---------- audio ----------
-let AC = null, master, engGain, engFilter, osc1, osc2, noiseBuf, muted = false;
+let AC = null, master, engGain, engFilter, osc1, osc2, noiseBuf, lfo, lfoGain, hiss, hissGain, hissFilter, muted = false;
+// Engine voice per vehicle: oscillator shapes, pitch at rest and per m/s, second-oscillator pitch ratio, filter,
+// vibrato depth (Hz) and how much rolling hiss is mixed in.
+const ENGINE = {
+  buggy: { t1: 'sawtooth', t2: 'square', base: 130, perMs: 300, ratio: .5, ft: 'lowpass', fBase: 500, fPerMs: 1100, q: 5, vib: 0, hiss: 0 },
+  nave: { t1: 'sine', t2: 'triangle', base: 210, perMs: 380, ratio: 1.5, ft: 'bandpass', fBase: 700, fPerMs: 800, q: 2, vib: 9, hiss: 0 },
+  camiao: { t1: 'square', t2: 'sawtooth', base: 42, perMs: 60, ratio: 2.02, ft: 'lowpass', fBase: 220, fPerMs: 380, q: 3, vib: 0, hiss: .25 },
+  skate: { t1: 'sine', t2: 'sawtooth', base: 320, perMs: 950, ratio: 2, ft: 'bandpass', fBase: 1400, fPerMs: 1600, q: 1.5, vib: 3, hiss: 1 },
+};
+function applyEngineVoice() {
+  if (!AC) return;
+  const e = ENGINE[vehKind] || ENGINE.buggy;
+  osc1.type = e.t1; osc2.type = e.t2; engFilter.type = e.ft; engFilter.Q.value = e.q;
+  lfoGain.gain.value = e.vib;
+}
 function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   try {
@@ -1093,8 +1112,15 @@ function initAudio() {
     engGain = AC.createGain(); engGain.gain.value = 0; engFilter.connect(engGain); engGain.connect(master);
     osc1 = AC.createOscillator(); osc1.type = 'sawtooth'; osc2 = AC.createOscillator(); osc2.type = 'square';
     osc1.connect(engFilter); osc2.connect(engFilter); osc1.start(); osc2.start();
+    lfo = AC.createOscillator(); lfo.frequency.value = 6; lfoGain = AC.createGain(); lfoGain.gain.value = 0;
+    lfo.connect(lfoGain); lfoGain.connect(osc1.frequency); lfoGain.connect(osc2.frequency); lfo.start();
     noiseBuf = AC.createBuffer(1, AC.sampleRate * .3, AC.sampleRate);
     const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    hiss = AC.createBufferSource(); hiss.buffer = noiseBuf; hiss.loop = true;
+    hissFilter = AC.createBiquadFilter(); hissFilter.type = 'bandpass'; hissFilter.frequency.value = 2500; hissFilter.Q.value = .8;
+    hissGain = AC.createGain(); hissGain.gain.value = 0;
+    hiss.connect(hissFilter); hissFilter.connect(hissGain); hissGain.connect(master); hiss.start();
+    applyEngineVoice();
   } catch { AC = null; }
 }
 function noiseHit(vol, freq, dur) {
@@ -1114,10 +1140,13 @@ function beep(freq, dur = .14, vol = .12) {
 }
 function updateAudio(thr) {
   if (!AC) return;
-  const t = AC.currentTime, sp = Math.abs(car.vf);
-  const f = 130 + sp * 300 + thr * 30;
-  osc1.frequency.setTargetAtTime(f, t, .05); osc2.frequency.setTargetAtTime(f * .5, t, .05);
-  engFilter.frequency.setTargetAtTime(500 + sp * 1100 + thr * 500, t, .08);
+  const t = AC.currentTime, sp = Math.abs(car.vf), e = ENGINE[vehKind] || ENGINE.buggy;
+  const f = e.base + sp * e.perMs + thr * e.base * .25;
+  osc1.frequency.setTargetAtTime(f, t, .05); osc2.frequency.setTargetAtTime(f * e.ratio, t, .05);
+  engFilter.frequency.setTargetAtTime(e.fBase + sp * e.fPerMs + thr * 400, t, .08);
+  const rolling = state === 'race' || state === 'finished';
+  hissGain.gain.setTargetAtTime(rolling ? e.hiss * Math.min(sp, 2.5) * .03 : 0, t, .08);
+  hissFilter.frequency.setTargetAtTime(1500 + sp * 1500, t, .1);
   const live = state === 'race' || state === 'countdown' || state === 'finished';
   engGain.gain.setTargetAtTime(live ? .03 + thr * .045 + Math.min(sp, 3) * .014 : 0, t, .08);
 }
@@ -1183,7 +1212,7 @@ function simStep(dt) {
   const fx = Math.cos(car.th), fz = Math.sin(car.th), rx = -fz, rz = fx;
   let vf = car.vx * fx + car.vz * fz, vr = car.vx * rx + car.vz * rz;
   const VS = VEHICLES[vehKind];
-  const onRug = rugAt(car.x, car.z) && vehKind !== 'nave';
+  const onRug = rugAt(car.x, car.z) && vehKind !== 'nave' && vehKind !== 'skate';
   car.steer += (inp.steer - car.steer) * Math.min(1, dt * 12);
   const prevVf = car.vf;
   if (car.ground) {
@@ -1480,8 +1509,8 @@ function updateVisuals(dt) {
   clock += dt;
   carRoot.position.set(car.x, car.y, car.z); carRoot.rotation.y = -car.th;
   carBody.rotation.z = car.pitch;
-  // A bicycle leans into the turn; the other vehicles roll outwards on their suspension.
-  carBody.rotation.x = vehKind === 'bicicleta' ? clamp(-car.roll * 3.5, -.45, .45) : car.roll;
+  // The skate rider leans into the turn; the other vehicles roll outwards on their suspension.
+  carBody.rotation.x = vehKind === 'skate' ? clamp(-car.roll * 3.5, -.45, .45) : car.roll;
   animateVehicle(veh, car.spin, car.steer, dt);
   if (veh.antenna) { veh.antenna.rotation.z = car.ant.z; veh.antenna.rotation.x = car.ant.x; }
   const gh = groundAt(car.x, car.z, car.y), lift = car.y - gh;
@@ -1664,7 +1693,7 @@ function updateMultiplayer(dt) {
   ghost.th += angDiff(o.th, ghost.th) * k; ghost.pitch += (o.p - ghost.pitch) * k; ghost.roll += (o.r - ghost.roll) * k; ghost.steer += (o.st - ghost.steer) * k;
   ghost.spin -= o.v * dt / (.045 * CAR_SCALE);
   ghostRoot.position.set(ghost.x, ghost.y, ghost.z); ghostRoot.rotation.y = -ghost.th;
-  ghostBody.rotation.z = ghost.pitch; ghostBody.rotation.x = ghostKind === 'bicicleta' ? clamp(-ghost.roll * 3.5, -.45, .45) : ghost.roll;
+  ghostBody.rotation.z = ghost.pitch; ghostBody.rotation.x = ghostKind === 'skate' ? clamp(-ghost.roll * 3.5, -.45, .45) : ghost.roll;
   animateVehicle(ghostVeh, ghost.spin, ghost.steer, dt);
   ghostVeh.flame.visible = o.n; if (o.n) ghostVeh.flame.scale.set(1, .7 + Math.random() * .6, 1);
   const tag = $('ghostTag');
