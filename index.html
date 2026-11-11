@@ -70,6 +70,10 @@ h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:clamp(2.2r
 .hud-big small{font-size:.95rem;color:var(--muted)}
 .hud-num{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05}
 #hNext{font-size:1.2rem;font-weight:700;color:var(--amber);line-height:1.15}
+.hud-item{border-color:var(--amber);background:rgba(255,184,77,.18)}
+.hud-item kbd{font-family:var(--font-ui);color:var(--amber)}
+#hItem{font-family:var(--font-display);font-size:1.3rem;color:var(--ink);line-height:1.1}
+body.touch .hud-item kbd{display:none}
 
 #side{position:fixed;z-index:10;top:max(12px,env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #tools{display:flex;gap:4px}
@@ -93,6 +97,7 @@ h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:clamp(2.2r
 #touch button.big{width:88px;height:88px;background:rgba(255,184,77,.25);border-color:var(--amber)}
 #touch button.small{width:58px;height:58px;font-size:.95rem;font-weight:700}
 #touch button.on{background:var(--amber);color:#2a1408}
+#touch button.item{background:rgba(255,184,77,.4);border-color:var(--amber);color:var(--ink)}
 body.touch #speedo{bottom:auto;top:max(12px,env(safe-area-inset-top,0px));right:auto;left:50%;transform:translateX(-50%);padding:2px 10px}
 body.touch #speedo .scale{display:none}
 body.touch #sKmh{font-size:1.4rem}
@@ -132,6 +137,7 @@ body.touch #sKmh{font-size:1.4rem}
   <div class="hud-block hud-opt"><span class="hud-lbl">Total</span><span class="hud-num" id="hTotal">0:00.00</span></div>
   <div class="hud-block"><span class="hud-lbl">Melhor volta</span><span class="hud-num" id="hBest">–</span></div>
   <div class="hud-block"><span class="hud-lbl">Próximo</span><span id="hNext">Aparador</span></div>
+  <div class="hud-block hud-item" id="hItemBlock" hidden><span class="hud-lbl">Poder · <kbd>E</kbd> para usar</span><span id="hItem">Nitro</span></div>
 </div>
 
 <div id="side">
@@ -155,11 +161,13 @@ body.touch #sKmh{font-size:1.4rem}
     <p class="eyebrow">Carro telecomandado · escala 1:24</p>
     <h1>Revolta<br>na Sala</h1>
     <p class="lede">A tua sala vista a 4 cm do chão. A 1.ª e a 3.ª volta são pela tijoleira, por baixo das cadeiras, do sofá e do móvel da TV. Na 2.ª volta sobes pelas tábuas: aparador, salto da régua para a mesa de vidro e prateleira da TV.</p>
+    <p class="touch-note">As caixas a brilhar dão poderes: numa corrida a 2, só a quem vai em último (nitro, óleo ou foguete); sozinho, dão nitro.</p>
     <ol class="route"><li>Aparador</li><li>Mesa de jantar</li><li>Debaixo do sofá</li><li>Janela</li><li>Móvel da TV</li><li>Meta</li></ol>
     <dl class="keys" id="keysList">
       <dt>Setas / WASD</dt><dd>Conduzir</dd>
       <dt>Espaço</dt><dd>Derrapar (travão de mão)</dd>
       <dt>R</dt><dd>Voltar ao último checkpoint</dd>
+      <dt>E</dt><dd>Usar poder</dd>
       <dt>C · M · P</dt><dd>Câmara · som · pausa</dd>
     </dl>
     <p class="touch-note" id="touchNote" hidden>Acelera e trava à direita, vira à esquerda. Drift para derrapar.</p>
@@ -212,6 +220,7 @@ body.touch #sKmh{font-size:1.4rem}
   </div>
   <div class="tgroup">
     <button id="tFull" class="small" type="button" aria-label="Ecrã inteiro">⛶</button>
+    <button id="tItem" class="small item" type="button" hidden>Usar</button>
     <button data-k="drift" class="small" type="button">Drift</button>
     <button data-k="down" type="button" aria-label="Travar ou marcha atrás">▼</button>
     <button data-k="up" class="big" type="button" aria-label="Acelerar">▲</button>
@@ -803,7 +812,7 @@ plank(7.3, 1.25, 0, 7.85, 2.03, .47, .3, M.oak);
 plank(7.85, 2.03, .47, 7.908, 2.112, .53, .3, M.oak);
 
 // ---------- gates (checkpoints) ----------
-const GMETA = { name: 'Meta', a: [6.9, 3.47], b: [6.9, D], dir: [-1, 0], spawn: [6.7, 4.1, Math.PI, 0], my: .2 };
+const GMETA = { name: 'Meta', a: [6.9, 3.47], b: [6.9, D], dir: [-1, 0], spawn: [6.7, 3.8, Math.PI, 0], my: .2 };
 const GSOFA = { name: 'Debaixo do sofá', a: [4.1, .8], b: [4.1, 3.05], dir: [1, 0], spawn: [4.75, 2.1, 0, 0], my: .045 };
 const GWIN = { name: 'Janela', a: [6.2, .17], b: [6.2, .75], dir: [1, 0], spawn: [6.35, .45, 0, 0], my: .2 };
 // maxY and minY tie a checkpoint to the floor or to a furniture top, since both routes cross the same lines on the plan.
@@ -879,6 +888,9 @@ for (const [x, z] of [[.1, .097], [.1, -.097], [-.1, .097], [-.1, -.097]]) {
   mesh(rg, rimMat, 0, 0, 0, spin);
   wheels.push({ pivot, spin, front: x > 0 });
 }
+const flameMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a').multiplyScalar(3), toneMapped: false, transparent: true, opacity: .9 });
+const flame = mesh(new THREE.ConeGeometry(.022, .1, 10), flameMat, -.2, .07, 0, carBody, { cast: false, recv: false });
+flame.rotation.z = Math.PI / 2; flame.name = 'flame'; flame.visible = false;
 const antenna = new THREE.Group(); antenna.position.set(-.09, .1, .05); carBody.add(antenna);
 cyl(.0025, .0025, .2, carDark, 0, .1, 0, antenna, 6);
 sph(.008, std({ color: '#ff3b30' }), 0, .2, 0, antenna);
@@ -926,6 +938,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyR') resetToCheckpoint();
   else if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
   else if (e.code === 'KeyF') toggleFullscreen();
+  else if (e.code === 'KeyE') useItem();
   else if (e.code === 'Enter' && state === 'menu') startSynced();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -1046,7 +1059,10 @@ function segCross(p0x, p0z, p1x, p1z, ax, az, bx, bz) {
 
 function simStep(dt) {
   const live = state === 'race';
-  const inp = live ? readInput() : { thr: 0, brk: state === 'finished' ? .3 : 0, steer: 0, drift: false };
+  let inp = live ? readInput() : { thr: 0, brk: state === 'finished' ? .3 : 0, steer: 0, drift: false };
+  if (car.stun > 0) { car.stun -= dt; inp = { thr: 0, brk: .5, steer: 0, drift: true }; car.th += 11 * dt * Math.min(1, car.stun * 2); }
+  if (car.nitro > 0) car.nitro -= dt;
+  if (car.oilT > 0) car.oilT -= dt;
   lastInput = inp;
   const fx = Math.cos(car.th), fz = Math.sin(car.th), rx = -fz, rz = fx;
   let vf = car.vx * fx + car.vz * fz, vr = car.vx * rx + car.vz * rz;
@@ -1054,14 +1070,15 @@ function simStep(dt) {
   car.steer += (inp.steer - car.steer) * Math.min(1, dt * 12);
   const prevVf = car.vf;
   if (car.ground) {
-    const maxV = onRug ? 1.35 : 1.7;
+    const maxV = (onRug ? 1.35 : 1.7) * (car.nitro > 0 ? 1.6 : 1);
     let a = 0;
     if (inp.thr) a += 4.5 * inp.thr * (1 - Math.max(0, vf) / maxV);
+    if (car.nitro > 0) a = Math.max(a, 8 * (1 - Math.max(0, vf) / maxV));
     if (inp.brk) { if (vf > .3) a -= 8 * inp.brk; else a -= 4 * inp.brk * (1 + Math.min(0, vf) / 1.2); }
     vf += a * dt;
     if (!inp.thr && !inp.brk) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 1.4 * dt);
     vf -= vf * (onRug ? .9 : .35) * dt;
-    const grip = (onRug ? 18 : 10) * (inp.drift ? .25 : 1);
+    const grip = (onRug ? 18 : 10) * (inp.drift ? .25 : 1) * (car.oilT > 0 ? .08 : 1);
     vr *= Math.exp(-grip * dt);
     const sa = car.steer * .5 / (1 + Math.abs(vf) * .35);
     let yaw = vf * Math.tan(sa) / .14;
@@ -1121,6 +1138,7 @@ function simStep(dt) {
       else if (i === 0 && warnCooldown <= 0) { toast(`Falta: ${gates[nextCp].name}`); warnCooldown = 2; beep(180, .2, .1); }
     }
   }
+  updatePowerups(dt, live);
   bumpCooldown -= dt; warnCooldown -= dt;
 }
 let lastInput = { thr: 0, brk: 0, steer: 0, drift: false };
@@ -1160,6 +1178,7 @@ function startRace() {
   show('hud', true); show('speedo', true); show('count', true);
   show('touch', isTouch);
   mp.oppFin = null; mp.oppFirst = false;
+  resetPowerups();
   $('hPosBlock').hidden = !mp.conn; $('fResult').hidden = true;
   canvas.focus();
 }
@@ -1308,7 +1327,7 @@ function updateCamera(dt) {
   }
   camPos.x = clamp(camPos.x, .05, W - .05); camPos.z = clamp(camPos.z, .2, D - .05); camPos.y = clamp(camPos.y, .03, H - .1);
   camera.position.copy(camPos); camera.lookAt(camLook);
-  const fovT = state === 'menu' ? 68 : 62 + 22 * Math.pow(speedFactor, 1.3);
+  const fovT = state === 'menu' ? 68 : 62 + 22 * Math.pow(speedFactor, 1.3) + (car.nitro > 0 ? 8 : 0);
   if (Math.abs(fovT - camera.fov) > .01) { camera.fov += (fovT - camera.fov) * (1 - Math.exp(-dt * 4)); camera.updateProjectionMatrix(); }
 }
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1391,6 +1410,7 @@ ghostRoot.visible = false; scene.add(ghostRoot);
 const ghostBody = ghostRoot.children[0];
 const ghostWheels = wheels.map(w => { const pivot = ghostBody.children[carBody.children.indexOf(w.pivot)]; return { pivot, spin: pivot.children[0], front: w.front }; });
 const ghost = { x: 0, z: 0, y: 0, th: 0, pitch: 0, roll: 0, steer: 0, spin: 0 };
+const ghostFlame = ghostBody.getObjectByName('flame');
 const mp = { peer: null, conn: null, host: false, code: '', opp: null, oppFin: null, oppFirst: false, sendT: 0 };
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PEER_PREFIX = 'revolta-na-sala-';
@@ -1453,7 +1473,7 @@ function bindConn(c) {
   c.on('data', onData);
   c.on('close', () => {
     if (mp.conn !== c) return;
-    mpReset();
+    mpReset(); showRemoteRocket(null);
     toast('O adversário saiu da corrida');
     mpStatus('O adversário saiu. Podes criar outra corrida.');
   });
@@ -1464,9 +1484,17 @@ function onData(m) {
   if (!m || typeof m !== 'object') return;
   if (m.t === 'start') startRace();
   else if (m.t === 's') {
-    mp.opp = { x: num(m.x), z: num(m.z), y: num(m.y), th: num(m.th), p: num(m.p), r: num(m.r), st: num(m.st), v: num(m.v), prog: num(m.prog), lap: num(m.lap) };
+    mp.opp = { x: num(m.x), z: num(m.z), y: num(m.y), th: num(m.th), p: num(m.p), r: num(m.r), st: num(m.st), v: num(m.v), prog: num(m.prog), lap: num(m.lap), n: m.n === 1,
+      rk: Array.isArray(m.rk) && m.rk.length === 4 ? m.rk.map(num) : null };
+    showRemoteRocket(mp.opp.rk);
     if (!ghostRoot.visible) Object.assign(ghost, { x: mp.opp.x, z: mp.opp.z, y: mp.opp.y, th: mp.opp.th });
     ghostRoot.visible = true;
+  } else if (m.t === 'oil') {
+    addOil(num(m.x), num(m.z), num(m.y), false);
+  } else if (m.t === 'hit') {
+    takeRocketHit();
+  } else if (m.t === 'boom') {
+    explode(num(m.x), num(m.y), num(m.z));
   } else if (m.t === 'fin') {
     mp.oppFin = num(m.time);
     mp.oppFirst = state !== 'finished';
@@ -1496,7 +1524,8 @@ function updateMultiplayer(dt) {
   if (mp.sendT <= 0 && (state === 'race' || state === 'countdown' || state === 'finished')) {
     mp.sendT = 1 / 15;
     send({ t: 's', x: +car.x.toFixed(3), z: +car.z.toFixed(3), y: +car.y.toFixed(3), th: +car.th.toFixed(3), p: +car.pitch.toFixed(3), r: +car.roll.toFixed(3),
-      st: +car.steer.toFixed(2), v: +car.vf.toFixed(2), prog: +myProgress().toFixed(3), lap: Math.min(lap, LAPS) });
+      st: +car.steer.toFixed(2), v: +car.vf.toFixed(2), prog: +myProgress().toFixed(3), lap: Math.min(lap, LAPS),
+      n: car.nitro > 0 ? 1 : 0, rk: rocket ? [+rocket.x.toFixed(3), +rocket.y.toFixed(3), +rocket.z.toFixed(3), +rocket.th.toFixed(3)] : 0 });
   }
   const o = mp.opp;
   if (!o || !ghostRoot.visible) return;
@@ -1507,6 +1536,7 @@ function updateMultiplayer(dt) {
   ghostRoot.position.set(ghost.x, ghost.y, ghost.z); ghostRoot.rotation.y = -ghost.th;
   ghostBody.rotation.z = ghost.pitch; ghostBody.rotation.x = ghost.roll;
   for (const w of ghostWheels) { w.spin.rotation.z = ghost.spin; if (w.front) w.pivot.rotation.y = -ghost.steer * .45; }
+  ghostFlame.visible = o.n; if (o.n) ghostFlame.scale.set(1, .7 + Math.random() * .6, 1);
   const tag = $('ghostTag');
   tagV.set(ghost.x, ghost.y + .1, ghost.z).project(camera);
   const onScreen = state !== 'menu' && tagV.z < 1 && Math.abs(tagV.x) < 1.1 && Math.abs(tagV.y) < 1.1;
@@ -1517,6 +1547,143 @@ function updateMultiplayer(dt) {
   }
   if (state === 'race') $('hPos').textContent = myProgress() >= o.prog ? '1.º' : '2.º';
 }
+
+// ---------- power-ups ----------
+// Glowing boxes along both routes. In a two-player race a box only gives a power to whoever is in last place,
+// so the leader cannot pull away for good; alone, every box gives nitro. A car holds one power at a time.
+Object.assign(car, { item: null, nitro: 0, oilT: 0, stun: 0 });
+const ITEM_NAMES = { nitro: 'Nitro', oil: 'Óleo', rocket: 'Foguete' };
+const boxMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb84d').multiplyScalar(1.8), toneMapped: false, transparent: true, opacity: .85 });
+const pickups = [[4.1, 1.5], [3.2, 3.8], [.35, 3.2], [5.5, .45], [1.78, 2.95], [8.12, 2.85]].map(([x, z]) => {
+  const y = groundAt(x, z, 2);
+  const m = mesh(new THREE.BoxGeometry(.045, .045, .045), boxMat, x, y + .035, z, scene, { cast: false, recv: false });
+  return { x, z, y, mesh: m, wait: 0 };
+});
+const slicks = [], booms = [];
+let rocket = null, remoteRocket = null, refuseCooldown = 0;
+const coffeeMat = new THREE.MeshPhysicalMaterial({ color: '#2b160b', roughness: .1, clearcoat: 1, transparent: true, opacity: .92 });
+const rocketMat = std({ color: '#d93a2b', roughness: .4 });
+
+function rocketMesh() {
+  const g = new THREE.Group();
+  const body = mesh(new THREE.CylinderGeometry(.008, .008, .07, 10), rocketMat, 0, 0, 0, g, { cast: false }); body.rotation.z = Math.PI / 2;
+  const tip = mesh(new THREE.ConeGeometry(.009, .02, 10), M.white, .045, 0, 0, g, { cast: false }); tip.rotation.z = -Math.PI / 2;
+  const fl = mesh(new THREE.ConeGeometry(.01, .04, 8), flameMat, -.055, 0, 0, g, { cast: false, recv: false }); fl.rotation.z = Math.PI / 2;
+  scene.add(g); return g;
+}
+function updateItemHud() {
+  $('hItemBlock').hidden = !car.item; $('tItem').hidden = !car.item || !isTouch;
+  if (car.item) { $('hItem').textContent = ITEM_NAMES[car.item]; $('tItem').textContent = ITEM_NAMES[car.item]; }
+}
+function resetPowerups() {
+  Object.assign(car, { item: null, nitro: 0, oilT: 0, stun: 0 });
+  for (const p of pickups) { p.wait = 0; p.mesh.visible = true; }
+  for (const s of slicks) scene.remove(s.mesh); slicks.length = 0;
+  if (rocket) { scene.remove(rocket.mesh); rocket = null; }
+  updateItemHud();
+}
+function rollItem() {
+  if (!mp.conn) return 'nitro';
+  const r = Math.random();
+  return r < .4 ? 'nitro' : r < .65 ? 'oil' : 'rocket';
+}
+function tryPickup(p) {
+  if (car.item) return false;
+  if (mp.conn && mp.opp && myProgress() >= mp.opp.prog) {
+    if (refuseCooldown <= 0) { toast('Os poderes são só para quem vai em último'); refuseCooldown = 3; }
+    return false;
+  }
+  car.item = rollItem(); updateItemHud();
+  toast(`Poder: ${ITEM_NAMES[car.item]}`); beep(990, .07, .08); setTimeout(() => beep(1320, .09, .08), 70);
+  return true;
+}
+function useItem() {
+  if (state !== 'race' || !car.item || car.stun > 0) return;
+  const fx = Math.cos(car.th), fz = Math.sin(car.th);
+  if (car.item === 'nitro') { car.nitro = 2; noiseHit(.3, 1800, .5); }
+  else if (car.item === 'oil') {
+    const x = car.x - fx * .17, z = car.z - fz * .17, y = groundAt(x, z, car.y);
+    addOil(x, z, y, true); send({ t: 'oil', x: +x.toFixed(3), z: +z.toFixed(3), y: +y.toFixed(3) }); noiseHit(.15, 300, .25);
+  } else if (car.item === 'rocket') {
+    if (rocket) scene.remove(rocket.mesh);
+    rocket = { x: car.x + fx * .12, z: car.z + fz * .12, y: car.y + .045, th: car.th, t: 4, mesh: rocketMesh() };
+    noiseHit(.25, 1200, .35);
+  }
+  car.item = null; updateItemHud();
+}
+function addOil(x, z, y, own) {
+  const m = mesh(new THREE.CircleGeometry(.11, 28), coffeeMat, x, y + .003, z, scene, { cast: false });
+  m.rotation.x = -Math.PI / 2;
+  // A slick dropped by this car only becomes slippery after a moment, so it never catches its own driver at once.
+  slicks.push({ x, z, y, t: 25, arm: own ? .8 : 0, mesh: m });
+  if (slicks.length > 6) scene.remove(slicks.shift().mesh);
+}
+function explode(x, y, z) {
+  const m = mesh(new THREE.SphereGeometry(.05, 14, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb04a').multiplyScalar(3), toneMapped: false, transparent: true }), x, y, z, scene, { cast: false, recv: false });
+  booms.push({ m, t: 0 }); noiseHit(.45, 700, .35);
+}
+function takeRocketHit() {
+  if (state !== 'race') return;
+  explode(car.x, car.y + .04, car.z);
+  car.stun = 1; car.vx *= .15; car.vz *= .15;
+  if (car.ground) { car.vy = 1.1; car.ground = false; }
+  toast('Levaste com um foguete!');
+}
+function rocketBlocked(r) {
+  if (r.x < 0 || r.x > W || r.z < 0 || r.z > D || r.y > H) return true;
+  if (r.y < groundAt(r.x, r.z, r.y) + .005) return true;
+  for (const o of obstacles) if (r.y > o.y0 && r.y < o.y1 && insideOb(o, r.x, r.z)) return true;
+  for (const rp of ramps) { const h = rampHeight(rp, r.x, r.z); if (h != null && r.y < h && r.y > h - .03) return true; }
+  return false;
+}
+function showRemoteRocket(rk) {
+  if (!rk) { if (remoteRocket) { scene.remove(remoteRocket); remoteRocket = null; } return; }
+  if (!remoteRocket) { remoteRocket = rocketMesh(); remoteRocket.position.set(rk[0], rk[1], rk[2]); }
+  remoteRocket.userData.target = rk;
+}
+function updatePowerups(dt, live) {
+  refuseCooldown -= dt;
+  for (const p of pickups) {
+    if (p.wait > 0) { p.wait -= dt; if (p.wait <= 0) p.mesh.visible = true; continue; }
+    if (!live || Math.hypot(car.x - p.x, car.z - p.z) > .09 || Math.abs(car.y - p.y) > .1) continue;
+    if (tryPickup(p)) { p.wait = 6; p.mesh.visible = false; }
+  }
+  for (let i = slicks.length - 1; i >= 0; i--) {
+    const s = slicks[i]; s.t -= dt; s.arm -= dt;
+    if (s.t <= 0) { scene.remove(s.mesh); slicks.splice(i, 1); continue; }
+    if (s.arm <= 0 && car.ground && car.oilT <= 0 && Math.abs(car.y - s.y) < .05 && Math.hypot(car.x - s.x, car.z - s.z) < .11) {
+      car.oilT = 1.1; car.th += (Math.random() < .5 ? -1 : 1) * .6; toast('Escorregaste no café!'); noiseHit(.2, 250, .3);
+    }
+  }
+  if (rocket) {
+    const r = rocket; r.t -= dt;
+    // Steers towards the opponent at up to 3 rad/s; with nobody to chase it flies straight.
+    if (ghostRoot.visible) {
+      r.th += clamp(angDiff(Math.atan2(ghost.z - r.z, ghost.x - r.x), r.th), -3 * dt, 3 * dt);
+      r.y += clamp(ghost.y + .035 - r.y, -.6 * dt, .6 * dt);
+    }
+    r.x += Math.cos(r.th) * 3.2 * dt; r.z += Math.sin(r.th) * 3.2 * dt;
+    let end = r.t <= 0 || rocketBlocked(r);
+    if (!end && ghostRoot.visible && Math.hypot(ghost.x - r.x, ghost.z - r.z, ghost.y + .035 - r.y) < .08) { send({ t: 'hit' }); end = true; }
+    if (end) { explode(r.x, r.y, r.z); send({ t: 'boom', x: +r.x.toFixed(3), y: +r.y.toFixed(3), z: +r.z.toFixed(3) }); scene.remove(r.mesh); rocket = null; }
+    else { r.mesh.position.set(r.x, r.y, r.z); r.mesh.rotation.y = -r.th; }
+  }
+}
+function updatePowerupVisuals(dt) {
+  for (const p of pickups) if (p.mesh.visible) { p.mesh.rotation.y += dt * 2.5; p.mesh.rotation.x += dt * 1.3; p.mesh.position.y = p.y + .035 + Math.sin(clock * 3 + p.x) * .008; }
+  flame.visible = car.nitro > 0; if (flame.visible) flame.scale.set(1, .7 + Math.random() * .6, 1);
+  for (let i = booms.length - 1; i >= 0; i--) {
+    const b = booms[i]; b.t += dt; const k = b.t / .35;
+    b.m.scale.setScalar(1 + k * 3); b.m.material.opacity = Math.max(0, 1 - k);
+    if (k >= 1) { scene.remove(b.m); booms.splice(i, 1); }
+  }
+  if (remoteRocket) {
+    const t = remoteRocket.userData.target, k = 1 - Math.exp(-dt * 14);
+    remoteRocket.position.x += (t[0] - remoteRocket.position.x) * k; remoteRocket.position.y += (t[1] - remoteRocket.position.y) * k; remoteRocket.position.z += (t[2] - remoteRocket.position.z) * k;
+    remoteRocket.rotation.y = -t[3];
+  }
+}
+$('tItem').addEventListener('pointerdown', e => { e.preventDefault(); useItem(); });
 
 // ---------- loop ----------
 placeCar(0);
@@ -1529,6 +1696,7 @@ function frame(now) {
     acc += dt;
     while (acc >= STEP) { simStep(STEP); acc -= STEP; }
     updateVisuals(dt);
+    updatePowerupVisuals(dt);
   }
   updateMultiplayer(dt);
   updateCamera(dt);
