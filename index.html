@@ -102,6 +102,12 @@ body.touch #speedo{bottom:auto;top:max(12px,env(safe-area-inset-top,0px));right:
 body.touch #speedo .scale{display:none}
 body.touch #sKmh{font-size:1.4rem}
 
+.garage{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.garage legend{padding:0;margin-bottom:6px}
+.garage-row{display:flex;flex-wrap:wrap;gap:6px}
+.veh{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;padding:7px 12px;font-weight:700;font-size:1rem}
+.veh[aria-pressed="true"]{background:var(--rust);border-color:var(--rust)}
+.veh-desc{margin:0;color:var(--muted);font-size:.98rem}
 .mp{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 #joinCode{width:7.5ch;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.15em;text-transform:uppercase;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink)}
 #joinCode::placeholder{color:var(--muted);opacity:.6}
@@ -173,6 +179,16 @@ body.touch #sKmh{font-size:1.4rem}
     <p class="touch-note" id="touchNote" hidden>Acelera e trava à direita, vira à esquerda. Drift para derrapar.</p>
     <p class="touch-note" id="iosNote" hidden>No iPhone, para ecrã inteiro: botão Partilhar → Adicionar ao ecrã principal, e abre o jogo pelo ícone.</p>
     <p class="best" id="menuBest"></p>
+    <fieldset class="garage">
+      <legend class="eyebrow">Veículo</legend>
+      <div class="garage-row">
+        <button type="button" class="veh" data-veh="buggy" aria-pressed="true">Buggy</button>
+        <button type="button" class="veh" data-veh="nave" aria-pressed="false">Nave espacial</button>
+        <button type="button" class="veh" data-veh="camiao" aria-pressed="false">Camião betoneira</button>
+        <button type="button" class="veh" data-veh="bicicleta" aria-pressed="false">Bicicleta</button>
+      </div>
+      <p class="veh-desc" id="vehDesc">Equilibrado em tudo.</p>
+    </fieldset>
     <button id="btnStart" class="cta" type="button">Começar corrida</button>
     <div class="mp">
       <p class="eyebrow">2 jogadores · cada um no seu telemóvel</p>
@@ -726,7 +742,7 @@ for (const r of [.26, .19]) { const t = mesh(new THREE.TorusGeometry(r, .012, 8,
   for (const x of [1.675, 2.25, 2.825]) boxX(x - .003, x + .003, .05, .55, 4.374, 4.38, M.black, scene, { cast: false });
   obBox(2.25, 4.59, 1.15, .21, 0, 0, .75, true);
   cyl(.08, .06, .26, M.pot, 1.25, .88, 4.62);
-  obCirc(1.25, 4.62, .09, .75, 1.4); obBox(2.85, 4.735, .16, .065, 0, .75, .95);
+  obCirc(1.25, 4.62, .09, .75, 1.4); obBox(2.4, 4.735, .16, .065, 0, .75, .95);
   for (let i = 0; i < 12; i++) {
     const a = rnd() * 6.3, t = rr(.1, .5), len = rr(.4, .6);
     const s = cyl(.003, .003, len, M.pampas, 1.25, 1.0 + len / 2, 4.62, scene, 4, { cast: false });
@@ -734,8 +750,8 @@ for (const r of [.26, .19]) { const t = mesh(new THREE.TorusGeometry(r, .012, 8,
     const tip = sph(.035, M.pampas, 1.25 - Math.sin(t) * Math.cos(a) * len, 1.0 + Math.cos(t) * len, 4.62 + Math.sin(t) * Math.sin(a) * len, scene, { cast: false });
     tip.scale.set(.6, 2.2, .6);
   }
-  rbox(.32, .2, .13, .02, M.black, 2.85, .85, 4.735);
-  for (const dx of [-.1, -.06, -.02]) { const k = cyl(.008, .008, .012, M.brass, 2.85 + dx, .9, 4.665); k.rotation.x = Math.PI / 2; }
+  rbox(.32, .2, .13, .02, M.black, 2.4, .85, 4.735);
+  for (const dx of [-.1, -.06, -.02]) { const k = cyl(.008, .008, .012, M.brass, 2.4 + dx, .9, 4.665); k.rotation.x = Math.PI / 2; }
   for (const [x, y, r] of [[1.55, 1.62, .42], [2.15, 1.28, .27], [2.45, 1.88, .27], [3.05, 1.45, .39]]) {
     const m = mesh(new THREE.CircleGeometry(r, 48), M.mirror, x, y, D - .012, scene, { cast: false }); m.rotation.y = Math.PI;
     const f = mesh(new THREE.TorusGeometry(r, .008, 8, 64), M.black, x, y, D - .012, scene, { cast: false }); f.rotation.y = Math.PI;
@@ -800,7 +816,8 @@ function plank(x0, z0, h0, x1, z1, h1, Wd, mat) {
   b.rotation.z = Math.atan2(h1 - h0, L);
   return r;
 }
-plank(5.4, 4.56, 0, 3.38, 4.56, .75, .32, M.oak);
+// Flush against the back wall (z = D), so a car cannot slip into a gap between the board and the wall.
+plank(5.4, D - .16, 0, 3.38, D - .16, .75, .32, M.oak);
 // A ruler sticks out from the sideboard towards the table and ends in a short kicker. The 25 cm gap to the
 // glass top is cleared only at close to full speed; slower, the car drops to the floor.
 plank(1.78, 4.42, .75, 1.78, 3.7, .75, .3, std({ map: rulerTex, roughness: .6 }));
@@ -869,31 +886,130 @@ const carWhite = std({ color: '#f4f1ea', roughness: .4 });
 const carDark = std({ color: '#1c1c1e', roughness: .6 });
 const rubber = std({ color: '#141414', roughness: .95 });
 const rimMat = std({ color: '#ffd23f', roughness: .4, metalness: .3 });
-box(.30, .02, .14, carDark, 0, .04, 0, carBody);
-rbox(.27, .05, .17, .02, paint, 0, .08, 0, carBody);
-const nose = rbox(.08, .035, .15, .015, paint, .14, .068, 0, carBody); nose.rotation.z = -.18;
-rbox(.11, .045, .1, .02, std({ color: '#20262c', roughness: .1, metalness: .3 }), -.01, .118, 0, carBody);
-box(.25, .004, .035, carWhite, .01, .106, 0, carBody);
-for (const z of [.045, -.045]) box(.01, .05, .01, carDark, -.12, .125, z, carBody);
-box(.065, .007, .2, paint, -.13, .152, 0, carBody);
-box(.02, .02, .16, carDark, .17, .05, 0, carBody);
-for (const z of [.045, -.045]) { const hl = cyl(.012, .012, .006, M.bulb, .176, .075, z, carBody, 12, { cast: false }); hl.rotation.z = Math.PI / 2; }
-const wheels = [];
-for (const [x, z] of [[.1, .097], [.1, -.097], [-.1, .097], [-.1, -.097]]) {
-  const pivot = new THREE.Group(); pivot.position.set(x, .045, z); carBody.add(pivot);
-  const spin = new THREE.Group(); pivot.add(spin);
-  const tg = new THREE.CylinderGeometry(.045, .045, .042, 20); tg.rotateX(Math.PI / 2);
-  mesh(tg, rubber, 0, 0, 0, spin);
-  const rg = new THREE.CylinderGeometry(.027, .027, .046, 6); rg.rotateX(Math.PI / 2);
-  mesh(rg, rimMat, 0, 0, 0, spin);
-  wheels.push({ pivot, spin, front: x > 0 });
-}
 const flameMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a').multiplyScalar(3), toneMapped: false, transparent: true, opacity: .9 });
-const flame = mesh(new THREE.ConeGeometry(.022, .1, 10), flameMat, -.2, .07, 0, carBody, { cast: false, recv: false });
-flame.rotation.z = Math.PI / 2; flame.name = 'flame'; flame.visible = false;
-const antenna = new THREE.Group(); antenna.position.set(-.09, .1, .05); carBody.add(antenna);
-cyl(.0025, .0025, .2, carDark, 0, .1, 0, antenna, 6);
-sph(.008, std({ color: '#ff3b30' }), 0, .2, 0, antenna);
+const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#5ee7ff').multiplyScalar(2.5), toneMapped: false });
+const glassMat = std({ color: '#20262c', roughness: .1, metalness: .3 });
+const chromeMat = std({ color: '#d9dde0', metalness: .9, roughness: .25 });
+const drumTex = tex(makeCanvas(256, 128, (g, w, h) => {
+  g.fillStyle = '#f2efe8'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ff6a1f';
+  for (let x = -h; x < w; x += 48) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 22, 0); g.lineTo(x + 22 + h, h); g.lineTo(x + h, h); g.fill(); }
+}));
+const drumMat = std({ map: drumTex, roughness: .5 });
+
+// Every vehicle shares the car's collision circle and stays under 19 cm at model scale (9.5 cm drawn), so all
+// of them still fit under the sofa and the TV unit. Models face +x with the ground at y = 0.
+function wheelSet(p, specs, radius, width, rim) {
+  return specs.map(([x, z, front]) => {
+    const pivot = new THREE.Group(); pivot.position.set(x, radius, z); p.add(pivot);
+    const spin = new THREE.Group(); pivot.add(spin);
+    const tg = new THREE.CylinderGeometry(radius, radius, width, 20); tg.rotateX(Math.PI / 2); mesh(tg, rubber, 0, 0, 0, spin);
+    const rg = new THREE.CylinderGeometry(radius * .6, radius * .6, width + .004, 6); rg.rotateX(Math.PI / 2); mesh(rg, rim, 0, 0, 0, spin);
+    return { pivot, spin, front };
+  });
+}
+function tube(p, ax, ay, bx, by, z, r, mat) {
+  const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy);
+  const m = cyl(r, r, len, mat, (ax + bx) / 2, (ay + by) / 2, z, p, 8);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / len, dy / len, 0));
+  return m;
+}
+function nitroFlame(p, x, y) {
+  const f = mesh(new THREE.ConeGeometry(.022, .1, 10), flameMat, x, y, 0, p, { cast: false, recv: false });
+  f.rotation.z = Math.PI / 2; f.visible = false; return f;
+}
+function buildVehicle(kind, parent, paintMat) {
+  const g = new THREE.Group(); parent.add(g);
+  const v = { wheels: [], antenna: null, flame: null, drum: null, hover: null, beacon: null };
+  if (kind === 'nave') {
+    const hov = new THREE.Group(); g.add(hov); v.hover = hov;
+    const hull = mesh(new THREE.SphereGeometry(1, 24, 14), paintMat, 0, .075, 0, hov); hull.scale.set(.16, .04, .1);
+    const dome = mesh(new THREE.SphereGeometry(.05, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), glassMat, .03, .095, 0, hov); dome.scale.set(1.3, .9, 1);
+    for (const sd of [1, -1]) {
+      const w = box(.12, .01, .1, carWhite, -.04, .07, sd * .11, hov); w.rotation.y = sd * .35;
+      const fin = box(.05, .045, .006, paintMat, -.13, .11, sd * .055, hov); fin.rotation.z = .4;
+      const eng = cyl(.022, .026, .07, carDark, -.15, .075, sd * .05, hov); eng.rotation.z = Math.PI / 2;
+      const ex = cyl(.018, .018, .004, glowMat, -.187, .075, sd * .05, hov, 16, { cast: false }); ex.rotation.z = Math.PI / 2;
+    }
+    const ring = mesh(new THREE.TorusGeometry(.09, .008, 8, 40), glowMat, 0, .03, 0, hov, { cast: false }); ring.rotation.x = Math.PI / 2;
+    v.flame = nitroFlame(hov, -.23, .075);
+  } else if (kind === 'camiao') {
+    box(.32, .025, .13, carDark, 0, .05, 0, g);
+    rbox(.09, .085, .14, .015, paintMat, .115, .105, 0, g);
+    box(.004, .035, .11, glassMat, .161, .125, 0, g);
+    box(.012, .02, .145, chromeMat, .166, .055, 0, g);
+    box(.2, .02, .11, carDark, -.045, .072, 0, g);
+    for (const x of [.02, -.12]) box(.012, .05, .09, carDark, x, .095, 0, g);
+    const tilt = new THREE.Group(); tilt.position.set(-.05, .122, 0); tilt.rotation.z = -.22; g.add(tilt);
+    const spin = new THREE.Group(); tilt.add(spin); v.drum = spin;
+    const prof = [[.001, -.105], [.035, -.095], [.056, -.045], [.059, 0], [.052, .05], [.028, .092], [.016, .105]].map(([r, y]) => new THREE.Vector2(r, y));
+    const dg = new THREE.LatheGeometry(prof, 24); dg.rotateZ(-Math.PI / 2);
+    mesh(dg, drumMat, 0, 0, 0, spin);
+    const chute = box(.05, .008, .025, carDark, -.165, .1, 0, g); chute.rotation.z = .5;
+    v.beacon = sph(.009, M.bulb, .115, .152, 0, g, { cast: false });
+    v.wheels = wheelSet(g, [[.11, .075, true], [.11, -.075, true], [-.06, .075], [-.06, -.075], [-.12, .075], [-.12, -.075]], .036, .03, chromeMat);
+    v.flame = nitroFlame(g, -.2, .06);
+  } else if (kind === 'bicicleta') {
+    const wheel = (x, front) => {
+      const pivot = new THREE.Group(); pivot.position.set(x, .05, 0); g.add(pivot);
+      const spin = new THREE.Group(); pivot.add(spin);
+      mesh(new THREE.TorusGeometry(.046, .006, 8, 32), rubber, 0, 0, 0, spin);
+      for (let k = 0; k < 4; k++) { const sp = box(.09, .0018, .0018, chromeMat, 0, 0, 0, spin, { cast: false }); sp.rotation.z = k * Math.PI / 4; }
+      const hub = cyl(.006, .006, .014, chromeMat, 0, 0, 0, spin, 8); hub.rotation.x = Math.PI / 2;
+      return { pivot, spin, front };
+    };
+    v.wheels = [wheel(.11, true), wheel(-.11, false)];
+    const r = .0045;
+    tube(g, -.11, .05, -.01, .04, 0, r, paintMat);
+    tube(g, -.11, .05, -.04, .12, 0, r, paintMat);
+    tube(g, -.01, .04, -.04, .12, 0, r, paintMat);
+    tube(g, -.04, .12, .075, .12, 0, r, paintMat);
+    tube(g, -.01, .04, .08, .095, 0, r, paintMat);
+    tube(g, .08, .095, .11, .05, 0, r, chromeMat);
+    tube(g, .075, .12, .08, .135, 0, r, chromeMat);
+    const bar = cyl(.003, .003, .06, carDark, .08, .135, 0, g, 8); bar.rotation.x = Math.PI / 2;
+    box(.03, .007, .014, carDark, -.045, .126, 0, g);
+    // Rider leaning over the handlebar, kept low enough to fit under the sofa.
+    const torso = cyl(.011, .013, .06, std({ color: '#2f6fd1', roughness: .8 }), .0, .15, 0, g, 10); torso.rotation.z = -.95;
+    sph(.014, std({ color: '#e2b996', roughness: .8 }), .035, .168, 0, g);
+    const helmet = mesh(new THREE.SphereGeometry(.017, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), paintMat, .035, .171, 0, g); helmet.scale.set(1.2, 1, 1);
+    for (const z of [.012, -.012]) { tube(g, .02, .16, .078, .135, z, .003, std({ color: '#2f6fd1', roughness: .8 })); tube(g, -.035, .13, -.01, .045, z, .004, carDark); }
+    v.flame = nitroFlame(g, -.17, .06);
+  } else {
+    box(.30, .02, .14, carDark, 0, .04, 0, g);
+    rbox(.27, .05, .17, .02, paintMat, 0, .08, 0, g);
+    const nose = rbox(.08, .035, .15, .015, paintMat, .14, .068, 0, g); nose.rotation.z = -.18;
+    rbox(.11, .045, .1, .02, glassMat, -.01, .118, 0, g);
+    box(.25, .004, .035, carWhite, .01, .106, 0, g);
+    for (const z of [.045, -.045]) box(.01, .05, .01, carDark, -.12, .125, z, g);
+    box(.065, .007, .2, paintMat, -.13, .152, 0, g);
+    box(.02, .02, .16, carDark, .17, .05, 0, g);
+    for (const z of [.045, -.045]) { const hl = cyl(.012, .012, .006, M.bulb, .176, .075, z, g, 12, { cast: false }); hl.rotation.z = Math.PI / 2; }
+    v.wheels = wheelSet(g, [[.1, .097, true], [.1, -.097, true], [-.1, .097], [-.1, -.097]], .045, .042, rimMat);
+    v.flame = nitroFlame(g, -.2, .07);
+    v.antenna = new THREE.Group(); v.antenna.position.set(-.09, .1, .05); g.add(v.antenna);
+    cyl(.0025, .0025, .2, carDark, 0, .1, 0, v.antenna, 6);
+    sph(.008, std({ color: '#ff3b30' }), 0, .2, 0, v.antenna);
+  }
+  return v;
+}
+// Handling per vehicle, as multipliers of the buggy: top speed, acceleration, tyre grip and steering.
+const VEHICLES = {
+  buggy: { name: 'Buggy', desc: 'Equilibrado em tudo.', max: 1, acc: 1, grip: 1, steer: 1 },
+  nave: { name: 'Nave espacial', desc: 'Paira, ignora o tapete e desliza nas curvas.', max: 1.08, acc: 1.1, grip: .55, steer: 1.05 },
+  camiao: { name: 'Camião betoneira', desc: 'Mais lento, mas agarra-se ao chão. A betoneira roda.', max: .86, acc: .75, grip: 1.35, steer: .85 },
+  bicicleta: { name: 'Bicicleta', desc: 'Curva apertado e inclina-se nas curvas.', max: .93, acc: 1.15, grip: 1.1, steer: 1.3 },
+};
+let vehKind = 'buggy';
+try { const k = localStorage.getItem('revolta-na-sala-veiculo'); if (VEHICLES[k]) vehKind = k; } catch { /* storage unavailable: start with the buggy */ }
+let veh = buildVehicle(vehKind, carBody, paint);
+function setVehicle(kind) {
+  if (!VEHICLES[kind]) return;
+  vehKind = kind; carBody.clear(); veh = buildVehicle(kind, carBody, paint);
+  try { localStorage.setItem('revolta-na-sala-veiculo', kind); } catch { /* storage unavailable: choice lasts this session */ }
+  document.querySelectorAll('.veh').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.veh === kind)));
+  $('vehDesc').textContent = VEHICLES[kind].desc;
+}
 const blob = mesh(new THREE.PlaneGeometry(.22, .16), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }), 0, 0, 0, scene, { cast: false, recv: false });
 blob.rotation.x = -Math.PI / 2;
 
@@ -1066,21 +1182,22 @@ function simStep(dt) {
   lastInput = inp;
   const fx = Math.cos(car.th), fz = Math.sin(car.th), rx = -fz, rz = fx;
   let vf = car.vx * fx + car.vz * fz, vr = car.vx * rx + car.vz * rz;
-  const onRug = rugAt(car.x, car.z);
+  const VS = VEHICLES[vehKind];
+  const onRug = rugAt(car.x, car.z) && vehKind !== 'nave';
   car.steer += (inp.steer - car.steer) * Math.min(1, dt * 12);
   const prevVf = car.vf;
   if (car.ground) {
-    const maxV = (onRug ? 1.35 : 1.7) * (car.nitro > 0 ? 1.6 : 1);
+    const maxV = (onRug ? 1.35 : 1.7) * VS.max * (car.nitro > 0 ? 1.6 : 1);
     let a = 0;
-    if (inp.thr) a += 4.5 * inp.thr * (1 - Math.max(0, vf) / maxV);
+    if (inp.thr) a += 4.5 * VS.acc * inp.thr * (1 - Math.max(0, vf) / maxV);
     if (car.nitro > 0) a = Math.max(a, 8 * (1 - Math.max(0, vf) / maxV));
     if (inp.brk) { if (vf > .3) a -= 8 * inp.brk; else a -= 4 * inp.brk * (1 + Math.min(0, vf) / 1.2); }
     vf += a * dt;
     if (!inp.thr && !inp.brk) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 1.4 * dt);
     vf -= vf * (onRug ? .9 : .35) * dt;
-    const grip = (onRug ? 18 : 10) * (inp.drift ? .25 : 1) * (car.oilT > 0 ? .08 : 1);
+    const grip = (onRug ? 18 : 10) * VS.grip * (inp.drift ? .25 : 1) * (car.oilT > 0 ? .08 : 1);
     vr *= Math.exp(-grip * dt);
-    const sa = car.steer * .5 / (1 + Math.abs(vf) * .35);
+    const sa = car.steer * .5 * VS.steer / (1 + Math.abs(vf) * .35);
     let yaw = vf * Math.tan(sa) / .14;
     if (inp.drift && Math.abs(vf) > 1) yaw *= 1.35;
     car.yaw = yaw;
@@ -1242,6 +1359,8 @@ document.addEventListener('fullscreenchange', syncFullscreenLabel);
 document.addEventListener('webkitfullscreenchange', syncFullscreenLabel);
 $('btnStart').addEventListener('click', startSynced);
 $('btnAgain').addEventListener('click', startSynced);
+document.querySelectorAll('.veh').forEach(b => b.addEventListener('click', () => setVehicle(b.dataset.veh)));
+setVehicle(vehKind);
 $('btnHost').addEventListener('click', () => { if (isTouch) goFullscreen(); hostRace(); });
 $('btnJoin').addEventListener('click', () => { if (isTouch) goFullscreen(); joinRace(); });
 $('joinCode').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') joinRace(); });
@@ -1350,13 +1469,21 @@ function drawSpeedLines() {
 }
 
 // ---------- per-frame visuals ----------
+function animateVehicle(v, spin, steer, dt) {
+  for (const w of v.wheels) { w.spin.rotation.z = spin; if (w.front) w.pivot.rotation.y = -steer * .45; }
+  if (v.drum) v.drum.rotation.x += dt * 2.5;
+  if (v.hover) v.hover.position.y = .012 + Math.sin(clock * 4) * .006;
+  if (v.beacon) v.beacon.visible = Math.sin(clock * 9) > 0;
+}
 let twinkleT = 0, clock = 0, speedFactor = 0;
 function updateVisuals(dt) {
   clock += dt;
   carRoot.position.set(car.x, car.y, car.z); carRoot.rotation.y = -car.th;
-  carBody.rotation.z = car.pitch; carBody.rotation.x = car.roll;
-  for (const w of wheels) { w.spin.rotation.z = car.spin; if (w.front) w.pivot.rotation.y = -car.steer * .45; }
-  antenna.rotation.z = car.ant.z; antenna.rotation.x = car.ant.x;
+  carBody.rotation.z = car.pitch;
+  // A bicycle leans into the turn; the other vehicles roll outwards on their suspension.
+  carBody.rotation.x = vehKind === 'bicicleta' ? clamp(-car.roll * 3.5, -.45, .45) : car.roll;
+  animateVehicle(veh, car.spin, car.steer, dt);
+  if (veh.antenna) { veh.antenna.rotation.z = car.ant.z; veh.antenna.rotation.x = car.ant.x; }
   const gh = groundAt(car.x, car.z, car.y), lift = car.y - gh;
   blob.position.set(car.x, gh + .003, car.z); blob.rotation.z = car.th;
   const bs = Math.max(.4, 1 - lift * 2.5); blob.scale.set(bs, bs, 1); blob.material.opacity = bs;
@@ -1404,13 +1531,15 @@ function updateVisuals(dt) {
 // collides. The winner is whoever crosses the line first, which holds because both countdowns start on the
 // same message.
 const GHOST_PAINT = new THREE.MeshPhysicalMaterial({ color: '#2f7dff', clearcoat: 1, clearcoatRoughness: .12, roughness: .35 });
-const ghostRoot = carRoot.clone(true);
-ghostRoot.traverse(o => { if (o.isMesh && o.material === paint) o.material = GHOST_PAINT; });
-ghostRoot.visible = false; scene.add(ghostRoot);
-const ghostBody = ghostRoot.children[0];
-const ghostWheels = wheels.map(w => { const pivot = ghostBody.children[carBody.children.indexOf(w.pivot)]; return { pivot, spin: pivot.children[0], front: w.front }; });
+const ghostRoot = new THREE.Group(); ghostRoot.scale.setScalar(CAR_SCALE); ghostRoot.visible = false; scene.add(ghostRoot);
+const ghostBody = new THREE.Group(); ghostRoot.add(ghostBody);
+let ghostVeh = null, ghostKind = '';
+function setGhostVehicle(kind) {
+  if (!VEHICLES[kind] || kind === ghostKind) return;
+  ghostKind = kind; ghostBody.clear(); ghostVeh = buildVehicle(kind, ghostBody, GHOST_PAINT);
+}
+setGhostVehicle('buggy');
 const ghost = { x: 0, z: 0, y: 0, th: 0, pitch: 0, roll: 0, steer: 0, spin: 0 };
-const ghostFlame = ghostBody.getObjectByName('flame');
 const mp = { peer: null, conn: null, host: false, code: '', opp: null, oppFin: null, oppFirst: false, sendT: 0 };
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PEER_PREFIX = 'revolta-na-sala-';
@@ -1487,6 +1616,7 @@ function onData(m) {
     mp.opp = { x: num(m.x), z: num(m.z), y: num(m.y), th: num(m.th), p: num(m.p), r: num(m.r), st: num(m.st), v: num(m.v), prog: num(m.prog), lap: num(m.lap), n: m.n === 1,
       rk: Array.isArray(m.rk) && m.rk.length === 4 ? m.rk.map(num) : null };
     showRemoteRocket(mp.opp.rk);
+    if (typeof m.k === 'string') setGhostVehicle(m.k);
     if (!ghostRoot.visible) Object.assign(ghost, { x: mp.opp.x, z: mp.opp.z, y: mp.opp.y, th: mp.opp.th });
     ghostRoot.visible = true;
   } else if (m.t === 'oil') {
@@ -1525,7 +1655,7 @@ function updateMultiplayer(dt) {
     mp.sendT = 1 / 15;
     send({ t: 's', x: +car.x.toFixed(3), z: +car.z.toFixed(3), y: +car.y.toFixed(3), th: +car.th.toFixed(3), p: +car.pitch.toFixed(3), r: +car.roll.toFixed(3),
       st: +car.steer.toFixed(2), v: +car.vf.toFixed(2), prog: +myProgress().toFixed(3), lap: Math.min(lap, LAPS),
-      n: car.nitro > 0 ? 1 : 0, rk: rocket ? [+rocket.x.toFixed(3), +rocket.y.toFixed(3), +rocket.z.toFixed(3), +rocket.th.toFixed(3)] : 0 });
+      k: vehKind, n: car.nitro > 0 ? 1 : 0, rk: rocket ? [+rocket.x.toFixed(3), +rocket.y.toFixed(3), +rocket.z.toFixed(3), +rocket.th.toFixed(3)] : 0 });
   }
   const o = mp.opp;
   if (!o || !ghostRoot.visible) return;
@@ -1534,16 +1664,16 @@ function updateMultiplayer(dt) {
   ghost.th += angDiff(o.th, ghost.th) * k; ghost.pitch += (o.p - ghost.pitch) * k; ghost.roll += (o.r - ghost.roll) * k; ghost.steer += (o.st - ghost.steer) * k;
   ghost.spin -= o.v * dt / (.045 * CAR_SCALE);
   ghostRoot.position.set(ghost.x, ghost.y, ghost.z); ghostRoot.rotation.y = -ghost.th;
-  ghostBody.rotation.z = ghost.pitch; ghostBody.rotation.x = ghost.roll;
-  for (const w of ghostWheels) { w.spin.rotation.z = ghost.spin; if (w.front) w.pivot.rotation.y = -ghost.steer * .45; }
-  ghostFlame.visible = o.n; if (o.n) ghostFlame.scale.set(1, .7 + Math.random() * .6, 1);
+  ghostBody.rotation.z = ghost.pitch; ghostBody.rotation.x = ghostKind === 'bicicleta' ? clamp(-ghost.roll * 3.5, -.45, .45) : ghost.roll;
+  animateVehicle(ghostVeh, ghost.spin, ghost.steer, dt);
+  ghostVeh.flame.visible = o.n; if (o.n) ghostVeh.flame.scale.set(1, .7 + Math.random() * .6, 1);
   const tag = $('ghostTag');
   tagV.set(ghost.x, ghost.y + .1, ghost.z).project(camera);
   const onScreen = state !== 'menu' && tagV.z < 1 && Math.abs(tagV.x) < 1.1 && Math.abs(tagV.y) < 1.1;
   tag.hidden = !onScreen;
   if (onScreen) {
     tag.style.left = `${(tagV.x + 1) / 2 * innerWidth}px`; tag.style.top = `${(1 - tagV.y) / 2 * innerHeight}px`;
-    tag.textContent = `Adversário · volta ${o.lap || 1}`;
+    tag.textContent = `${VEHICLES[ghostKind]?.name || 'Adversário'} · volta ${o.lap || 1}`;
   }
   if (state === 'race') $('hPos').textContent = myProgress() >= o.prog ? '1.º' : '2.º';
 }
@@ -1671,7 +1801,7 @@ function updatePowerups(dt, live) {
 }
 function updatePowerupVisuals(dt) {
   for (const p of pickups) if (p.mesh.visible) { p.mesh.rotation.y += dt * 2.5; p.mesh.rotation.x += dt * 1.3; p.mesh.position.y = p.y + .035 + Math.sin(clock * 3 + p.x) * .008; }
-  flame.visible = car.nitro > 0; if (flame.visible) flame.scale.set(1, .7 + Math.random() * .6, 1);
+  veh.flame.visible = car.nitro > 0; if (veh.flame.visible) veh.flame.scale.set(1, .7 + Math.random() * .6, 1);
   for (let i = booms.length - 1; i >= 0; i--) {
     const b = booms[i]; b.t += dt; const k = b.t / .35;
     b.m.scale.setScalar(1 + k * 3); b.m.material.opacity = Math.max(0, 1 - k);
