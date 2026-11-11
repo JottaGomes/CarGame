@@ -140,7 +140,7 @@ body.touch #sKmh{font-size:1.4rem}
     <button id="bSound" type="button">Som<kbd>M</kbd></button>
     <button id="bReset" type="button">Repor<kbd>R</kbd></button>
     <button id="bPause" type="button">Pausa<kbd>P</kbd></button>
-    <button id="bFull" type="button">Ecrã inteiro<kbd>F</kbd></button>
+    <button id="bFull" type="button"><span id="bFullLbl">Ecrã inteiro</span><kbd>F</kbd></button>
   </div>
   <canvas id="minimap" aria-label="Mapa da sala"></canvas>
 </div>
@@ -211,6 +211,7 @@ body.touch #sKmh{font-size:1.4rem}
     <button data-k="right" type="button" aria-label="Virar à direita">▶</button>
   </div>
   <div class="tgroup">
+    <button id="tFull" class="small" type="button" aria-label="Ecrã inteiro">⛶</button>
     <button data-k="drift" class="small" type="button">Drift</button>
     <button data-k="down" type="button" aria-label="Travar ou marcha atrás">▼</button>
     <button data-k="up" class="big" type="button" aria-label="Acelerar">▲</button>
@@ -1211,6 +1212,15 @@ function toggleFullscreen() {
   else goFullscreen();
 }
 $('bFull').addEventListener('click', () => { toggleFullscreen(); canvas.focus(); });
+$('tFull').addEventListener('click', e => { e.preventDefault(); toggleFullscreen(); });
+function syncFullscreenLabel() {
+  const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  $('bFullLbl').textContent = on ? 'Sair do ecrã inteiro' : 'Ecrã inteiro';
+  $('tFull').setAttribute('aria-label', on ? 'Sair do ecrã inteiro' : 'Ecrã inteiro');
+  $('tFull').classList.toggle('on', on);
+}
+document.addEventListener('fullscreenchange', syncFullscreenLabel);
+document.addEventListener('webkitfullscreenchange', syncFullscreenLabel);
 $('btnStart').addEventListener('click', startSynced);
 $('btnAgain').addEventListener('click', startSynced);
 $('btnHost').addEventListener('click', () => { if (isTouch) goFullscreen(); hostRace(); });
@@ -1230,7 +1240,7 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 if (isTouch) { document.body.classList.add('touch'); $('keysList').hidden = true; $('touchNote').hidden = false; }
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 if (isIOS && !navigator.standalone) $('iosNote').hidden = false;
-if (isIOS || !(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('bFull').hidden = true;
+if (isIOS || !(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) { $('bFull').hidden = true; $('tFull').hidden = true; }
 
 // ---------- minimap ----------
 const mm = $('minimap'), mg = mm.getContext('2d');
