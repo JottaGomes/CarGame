@@ -166,7 +166,7 @@ body.touch #sKmh{font-size:1.4rem}
   <div class="card">
     <p class="eyebrow">Carro telecomandado · escala 1:24</p>
     <h1>Revolta<br>na Sala</h1>
-    <p class="lede">A tua sala vista a 4 cm do chão. A 1.ª e a 3.ª volta são pela tijoleira, por baixo das cadeiras, do sofá e do móvel da TV. Na 2.ª volta sobes pelas tábuas: aparador, salto da régua para a mesa de vidro e prateleira da TV.</p>
+    <p class="lede">A tua sala vista a 4 cm do chão. A 1.ª e a 3.ª volta são pela tijoleira, por baixo das cadeiras, do sofá e do móvel da TV. Na 2.ª volta sobes pelas tábuas: aparador, salto da régua para a mesa de vidro, tábua até ao encosto do sofá, chaise e prateleira da TV.</p>
     <p class="touch-note">As caixas a brilhar dão poderes: numa corrida a 2, só a quem vai em último (nitro, óleo ou foguete); sozinho, dão nitro.</p>
     <ol class="route"><li>Aparador</li><li>Mesa de jantar</li><li>Debaixo do sofá</li><li>Janela</li><li>Móvel da TV</li><li>Meta</li></ol>
     <dl class="keys" id="keysList">
@@ -591,11 +591,18 @@ rbox(.2, .28, .85, .04, M.white, W - .1, 2.28, .6);
   rbox(.24, .5, 2.3, .08, m, 3.72, .62, 1.9, g);
   for (const z of [1.1, 1.85, 2.6]) { const c = rbox(.2, .42, .7, .09, m, 3.88, .72, z, g); c.rotation.z = .12; }
   rbox(.95, .3, .2, .06, m, 4.075, .5, 3.0, g);
-  for (const [x, z, ry] of [[4.02, 1.35, .2], [4.02, 2.25, -.15], [4.95, .85, 1.5]]) { const p = rbox(.42, .38, .13, .05, m, x, .68, z, g); p.rotation.y = Math.PI / 2 + ry; p.rotation.z = .15; }
+  for (const [x, z, ry] of [[4.02, 2.25, .2], [4.02, 2.75, -.15], [4.95, .85, 1.5]]) { const p = rbox(.42, .38, .13, .05, m, x, .68, z, g); p.rotation.y = Math.PI / 2 + ry; p.rotation.z = .15; }
   box(.33, .014, .23, M.black, 5.15, .53, 1.2);
   const scr = box(.008, .22, .33, M.black, 5.33, .64, 1.2); scr.rotation.z = -.25;
-  obBox(4.075, 1.925, .475, 1.175, 0, .1, .9);
-  obBox(5.03, 1.2, .485, .45, 0, .1, .6);
+  // Walkable on the second lap: the back with its headrests, the seat cushions and the chaise. The body
+  // starts 10 cm up, so the car still drives underneath on the floor laps.
+  obBox(3.79, 1.925, .19, 1.175, 0, .1, .93, true);
+  obBox(4.265, 1.925, .285, 1.175, 0, .1, .525, true);
+  obBox(5.03, 1.2, .485, .45, 0, .1, .525, true);
+  obBox(4.075, 3.0, .475, .1, 0, .1, .65);
+  obBox(5.15, 1.2, .165, .115, 0, .525, .54, true);
+  obBox(5.33, 1.2, .03, .165, 0, .53, .76);
+  for (const [x, z] of [[4.02, 2.25], [4.02, 2.75], [4.95, .85]]) obBox(x, z, .08, .21, 0, .5, .87);
 }
 
 // ---------- rust armchair ----------
@@ -822,7 +829,8 @@ plank(5.4, D - .16, 0, 3.38, D - .16, .75, .32, M.oak);
 // glass top is cleared only at close to full speed; slower, the car drops to the floor.
 plank(1.78, 4.42, .75, 1.78, 3.7, .75, .3, std({ map: rulerTex, roughness: .6 }));
 plank(1.78, 3.7, .75, 1.78, 3.6, .81, .3, M.oak);
-plank(1.78, 1.57, .757, 1.78, .25, 0, .3, M.oak);
+// From the north-east corner of the glass top up to the sofa back; past the back the car drops onto the seat.
+plank(2.1, 1.6, .757, 3.62, 1.05, .92, .3, M.oak);
 // The TV plank stops about 17 cm short of the shelf and ends in a kicker, so the car hops onto the TV unit;
 // too slow and it hits the front of the unit and drops back to the floor.
 plank(7.3, 1.25, 0, 7.85, 2.03, .47, .3, M.oak);
@@ -830,7 +838,7 @@ plank(7.85, 2.03, .47, 7.908, 2.112, .53, .3, M.oak);
 
 // ---------- gates (checkpoints) ----------
 const GMETA = { name: 'Meta', a: [6.9, 3.47], b: [6.9, D], dir: [-1, 0], spawn: [6.7, 3.8, Math.PI, 0], my: .2 };
-const GSOFA = { name: 'Debaixo do sofá', a: [4.1, .8], b: [4.1, 3.05], dir: [1, 0], spawn: [4.75, 2.1, 0, 0], my: .045 };
+const GSOFA = { name: 'Debaixo do sofá', a: [4.1, .8], b: [4.1, 3.05], dir: [1, 0], spawn: [4.75, 2.1, 0, 0], my: .045, maxY: .08 };
 const GWIN = { name: 'Janela', a: [6.2, .17], b: [6.2, .75], dir: [1, 0], spawn: [6.35, .45, 0, 0], my: .2 };
 // maxY and minY tie a checkpoint to the floor or to a furniture top, since both routes cross the same lines on the plan.
 const G_FLOOR = [GMETA,
@@ -841,7 +849,8 @@ const G_FLOOR = [GMETA,
 const G_HIGH = [GMETA,
   { name: 'Em cima do aparador', a: [2.8, 4.38], b: [2.8, D], dir: [-1, 0], spawn: [3.1, 4.5, Math.PI, 1], my: .8, sy: .754, minY: .6 },
   { name: 'Em cima da mesa', a: [1.305, 2.0], b: [2.255, 2.0], dir: [0, -1], spawn: [1.6, 1.85, -Math.PI / 2, 1], my: .8, sy: .762, minY: .6 },
-  GSOFA, GWIN,
+  { name: 'Em cima do sofá', a: [5.05, .75], b: [5.05, 1.65], dir: [1, 0], spawn: [4.8, 1.25, 0, 1], my: .57, sy: .53, minY: .4 },
+  GWIN,
   { name: 'Em cima do móvel da TV', a: [7.98, 3.3], b: [W, 3.3], dir: [0, 1], spawn: [8.06, 3.45, Math.PI / 2, 1], my: .56, sy: .524, minY: .4 }];
 let gates = G_FLOOR;
 function setLapGates() {
@@ -1713,8 +1722,8 @@ function updateMultiplayer(dt) {
 Object.assign(car, { item: null, nitro: 0, oilT: 0, stun: 0 });
 const ITEM_NAMES = { nitro: 'Nitro', oil: 'Óleo', rocket: 'Foguete' };
 const boxMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb84d').multiplyScalar(1.8), toneMapped: false, transparent: true, opacity: .85 });
-const pickups = [[4.1, 1.5], [3.2, 3.8], [.35, 3.2], [5.5, .45], [1.78, 2.95], [8.12, 2.85]].map(([x, z]) => {
-  const y = groundAt(x, z, 2);
+const pickups = [[4.1, 1.5, 0], [3.2, 3.8, 0], [.35, 3.2, 0], [5.5, .45, 0], [1.78, 2.95, 2], [8.12, 2.85, 2], [4.75, 1.4, 2]].map(([x, z, hint]) => {
+  const y = groundAt(x, z, hint);
   const m = mesh(new THREE.BoxGeometry(.045, .045, .045), boxMat, x, y + .035, z, scene, { cast: false, recv: false });
   return { x, z, y, mesh: m, wait: 0 };
 });
